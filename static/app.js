@@ -29,18 +29,53 @@
     const fontSizeInput = document.getElementById('font-size');
     const textColorInput = document.getElementById('text-color');
     const fontSelect = document.getElementById('font-select');
+    const uploadFontBtn = document.getElementById('upload-font-btn');
+    const fontUploadInput = document.getElementById('font-upload-input');
+
+    let availableFonts = [];
 
     // Load available fonts
-    fetch('/fonts-list')
-        .then(r => r.json())
-        .then(data => {
-            data.fonts.forEach(f => {
-                const opt = document.createElement('option');
-                opt.value = f;
-                opt.textContent = f.replace(/\.(ttf|otf)$/i, '');
-                fontSelect.appendChild(opt);
+    function loadFonts() {
+        return fetch('/fonts-list')
+            .then(r => r.json())
+            .then(data => {
+                availableFonts = data.fonts;
+                refreshFontSelect();
             });
+    }
+
+    function refreshFontSelect() {
+        const current = fontSelect.value;
+        fontSelect.innerHTML = '<option value="">Default</option>';
+        availableFonts.forEach(f => {
+            const opt = document.createElement('option');
+            opt.value = f;
+            opt.textContent = f.replace(/\.(ttf|otf)$/i, '');
+            fontSelect.appendChild(opt);
         });
+        fontSelect.value = current;
+    }
+
+    loadFonts();
+
+    // Font upload
+    uploadFontBtn.addEventListener('click', () => fontUploadInput.click());
+    fontUploadInput.addEventListener('change', async () => {
+        const file = fontUploadInput.files[0];
+        if (!file) return;
+        const form = new FormData();
+        form.append('font', file);
+        try {
+            const res = await fetch('/upload-font', { method: 'POST', body: form });
+            const data = await res.json();
+            if (data.error) { alert(data.error); return; }
+            await loadFonts();
+            fontSelect.value = data.filename;
+        } catch (e) {
+            alert('Font upload failed');
+        }
+        fontUploadInput.value = '';
+    });
 
     // --- Dropzone helpers ---
     function setupDropzone(zone, input, onFile) {
@@ -198,7 +233,7 @@
 
             marker.innerHTML = `
                 <div class="marker-text" style="font-size:${displayFontSize}px; color:${field.color}">${field.column}</div>
-                <div class="marker-tag">${field.column} (${field.fontSize}px)</div>
+                <div class="marker-tag">${field.column} (${field.fontSize}px, ${field.font ? field.font.replace(/\.(ttf|otf)$/i, '') : 'Default'})</div>
                 <button class="remove-marker" data-column="${field.column}">&times;</button>
             `;
 
@@ -212,6 +247,15 @@
     }
 
     // --- Placed fields list ---
+    function buildFontOptions(selectedFont) {
+        let html = `<option value=""${selectedFont === '' ? ' selected' : ''}>Default</option>`;
+        availableFonts.forEach(f => {
+            const label = f.replace(/\.(ttf|otf)$/i, '');
+            html += `<option value="${f}"${f === selectedFont ? ' selected' : ''}>${label}</option>`;
+        });
+        return html;
+    }
+
     function renderFieldsList() {
         fieldsList.innerHTML = '';
         placedFields.forEach(field => {
@@ -220,11 +264,16 @@
                 <strong>${field.column}</strong>
                 <span class="coord">(${field.x}, ${field.y})</span>
                 <label class="field-size-label">size: <input type="number" class="field-size-input" value="${field.fontSize}" min="8" max="200"></label>
+                <label class="field-font-label">font: <select class="field-font-select">${buildFontOptions(field.font)}</select></label>
                 <button class="remove-btn" data-column="${field.column}">&times;</button>
             `;
             li.querySelector('.remove-btn').addEventListener('click', () => removeField(field.column));
             li.querySelector('.field-size-input').addEventListener('input', (e) => {
                 field.fontSize = parseInt(e.target.value) || 30;
+                renderMarkers();
+            });
+            li.querySelector('.field-font-select').addEventListener('change', (e) => {
+                field.font = e.target.value;
                 renderMarkers();
             });
             fieldsList.appendChild(li);

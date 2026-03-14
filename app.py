@@ -96,6 +96,28 @@ def fonts_list():
     return jsonify(fonts=fonts)
 
 
+@app.route('/upload-font', methods=['POST'])
+def upload_font():
+    """Upload a custom font file to the fonts directory."""
+    if 'font' not in request.files:
+        return jsonify(error='No font file provided'), 400
+
+    f = request.files['font']
+    if not f.filename:
+        return jsonify(error='Empty filename'), 400
+
+    ext = os.path.splitext(f.filename)[1].lower()
+    if ext not in ('.ttf', '.otf'):
+        return jsonify(error='Unsupported font format. Use TTF or OTF.'), 400
+
+    # Keep original filename for readability
+    safe_name = f.filename.replace(' ', '_')
+    filepath = os.path.join(FONTS_DIR, safe_name)
+    f.save(filepath)
+
+    return jsonify(filename=safe_name)
+
+
 def load_font(path, size):
     try:
         return ImageFont.truetype(path, size)

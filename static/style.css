@@ -309,6 +309,40 @@ h3 {
     text-align: center;
 }
 
+.field-font-label {
+    font-size: 0.8rem;
+    color: #8b949e;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.field-font-select {
+    padding: 0.15rem 0.3rem;
+    border-radius: 4px;
+    border: 1px solid #30363d;
+    background: #0d1117;
+    color: #e1e4e8;
+    font-size: 0.8rem;
+    max-width: 120px;
+}
+
+.btn-upload-font {
+    padding: 0.3rem 0.7rem;
+    border-radius: 5px;
+    border: 1px solid #30363d;
+    background: #21262d;
+    color: #c9d1d9;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.btn-upload-font:hover {
+    border-color: #58a6ff;
+    background: #30363d;
+}
+
 #fields-list li .remove-btn {
     background: none;
     border: none;
