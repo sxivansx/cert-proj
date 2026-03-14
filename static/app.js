@@ -7,25 +7,32 @@
     let columns = [];
     let activeColumn = null;
     let placedFields = []; // { column, x, y, fontSize, color, font }
+    let dataPreviewCollapsed = false;
 
     // DOM elements
     const templateDropzone = document.getElementById('template-dropzone');
     const templateInput = document.getElementById('template-input');
     const templateStatus = document.getElementById('template-status');
+    const templateIcon = document.getElementById('template-icon');
     const dataDropzone = document.getElementById('data-dropzone');
     const dataInput = document.getElementById('data-input');
     const dataStatus = document.getElementById('data-status');
+    const dataIcon = document.getElementById('data-icon');
     const mappingSection = document.getElementById('mapping-section');
     const columnsBar = document.getElementById('columns-bar');
     const previewWrapper = document.getElementById('preview-wrapper');
     const templatePreview = document.getElementById('template-preview');
     const markersLayer = document.getElementById('markers-layer');
     const fieldsList = document.getElementById('fields-list');
-    const generateSection = document.getElementById('generate-section');
+    const emptyFieldsMsg = document.getElementById('empty-fields-msg');
     const generateBtn = document.getElementById('generate-btn');
     const generateStatus = document.getElementById('generate-status');
     const previewSection = document.getElementById('preview-section');
     const previewTable = document.getElementById('data-preview-table');
+    const previewToggle = document.getElementById('preview-toggle');
+    const previewBody = document.getElementById('preview-body');
+    const hintBanner = document.getElementById('hint-banner');
+    const hintText = document.getElementById('hint-text');
     const fontSizeInput = document.getElementById('font-size');
     const textColorInput = document.getElementById('text-color');
     const fontSelect = document.getElementById('font-select');
@@ -34,7 +41,19 @@
 
     let availableFonts = [];
 
-    // Load available fonts
+    const checkmarkSVG = `<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+        <polyline points="22 4 12 14.01 9 11.01"/>
+    </svg>`;
+
+    // ── Collapsible data preview ──
+    previewToggle.addEventListener('click', () => {
+        dataPreviewCollapsed = !dataPreviewCollapsed;
+        previewToggle.classList.toggle('collapsed', dataPreviewCollapsed);
+        previewBody.classList.toggle('collapsed', dataPreviewCollapsed);
+    });
+
+    // ── Load available fonts ──
     function loadFonts() {
         return fetch('/fonts-list')
             .then(r => r.json())
@@ -58,7 +77,7 @@
 
     loadFonts();
 
-    // Font upload
+    // ── Font upload ──
     uploadFontBtn.addEventListener('click', () => fontUploadInput.click());
     fontUploadInput.addEventListener('change', async () => {
         const file = fontUploadInput.files[0];
@@ -77,7 +96,7 @@
         fontUploadInput.value = '';
     });
 
-    // --- Dropzone helpers ---
+    // ── Dropzone helpers ──
     function setupDropzone(zone, input, onFile) {
         zone.addEventListener('click', () => input.click());
         input.addEventListener('change', () => {
@@ -95,7 +114,7 @@
         });
     }
 
-    // --- Template upload ---
+    // ── Template upload ──
     setupDropzone(templateDropzone, templateInput, async (file) => {
         const form = new FormData();
         form.append('template', file);
@@ -111,8 +130,9 @@
             templateFilename = data.filename;
             templateWidth = data.width;
             templateHeight = data.height;
-            templateStatus.textContent = `${file.name} (${data.width}x${data.height})`;
+            templateStatus.textContent = `${file.name} (${data.width}\u00d7${data.height})`;
             templateDropzone.classList.add('uploaded');
+            templateIcon.innerHTML = checkmarkSVG;
 
             templatePreview.src = data.url;
             checkReady();
@@ -121,7 +141,7 @@
         }
     });
 
-    // --- Data upload ---
+    // ── Data upload ──
     setupDropzone(dataDropzone, dataInput, async (file) => {
         const form = new FormData();
         form.append('datafile', file);
@@ -138,6 +158,7 @@
             columns = data.columns;
             dataStatus.textContent = `${file.name} (${columns.length} columns)`;
             dataDropzone.classList.add('uploaded');
+            dataIcon.innerHTML = checkmarkSVG;
 
             renderColumns();
             renderDataPreview(data.columns, data.preview);
@@ -147,14 +168,19 @@
         }
     });
 
-    function checkReady() {
-        if (templateFilename && dataFilename && columns.length > 0) {
-            mappingSection.classList.remove('hidden');
-            generateSection.classList.remove('hidden');
+    function showSection(el) {
+        if (!el.classList.contains('visible')) {
+            el.classList.add('visible');
         }
     }
 
-    // --- Column chips ---
+    function checkReady() {
+        if (templateFilename && dataFilename && columns.length > 0) {
+            showSection(mappingSection);
+        }
+    }
+
+    // ── Column chips ──
     function renderColumns() {
         columnsBar.innerHTML = '';
         columns.forEach(col => {
@@ -176,12 +202,25 @@
                     activeColumn = col;
                     chip.classList.add('active');
                 }
+                updateHintBanner();
             });
             columnsBar.appendChild(chip);
         });
     }
 
-    // --- Click to place ---
+    // ── Active column guidance ──
+    function updateHintBanner() {
+        if (activeColumn) {
+            hintText.textContent = `Click on the template to place "${activeColumn}"`;
+            hintBanner.classList.add('active');
+            previewWrapper.classList.add('awaiting-click');
+        } else {
+            hintBanner.classList.remove('active');
+            previewWrapper.classList.remove('awaiting-click');
+        }
+    }
+
+    // ── Click to place ──
     previewWrapper.addEventListener('click', (e) => {
         if (!activeColumn) return;
 
@@ -208,12 +247,13 @@
         });
 
         activeColumn = null;
+        updateHintBanner();
         renderColumns();
         renderMarkers();
         renderFieldsList();
     });
 
-    // --- Markers on template ---
+    // ── Markers on template ──
     function renderMarkers() {
         markersLayer.innerHTML = '';
 
@@ -223,7 +263,6 @@
             const pctX = (field.x / templateWidth) * 100;
             const pctY = (field.y / templateHeight) * 100;
 
-            // Scale font size from real image coords to displayed size
             const displayFontSize = Math.max(8, Math.round(field.fontSize * scale));
 
             const marker = document.createElement('div');
@@ -246,7 +285,7 @@
         });
     }
 
-    // --- Placed fields list ---
+    // ── Placed fields list (card rows) ──
     function buildFontOptions(selectedFont) {
         let html = `<option value=""${selectedFont === '' ? ' selected' : ''}>Default</option>`;
         availableFonts.forEach(f => {
@@ -258,25 +297,47 @@
 
     function renderFieldsList() {
         fieldsList.innerHTML = '';
+
+        if (placedFields.length === 0) {
+            emptyFieldsMsg.style.display = '';
+            return;
+        }
+        emptyFieldsMsg.style.display = 'none';
+
         placedFields.forEach(field => {
-            const li = document.createElement('li');
-            li.innerHTML = `
-                <strong>${field.column}</strong>
-                <span class="coord">(${field.x}, ${field.y})</span>
-                <label class="field-size-label">size: <input type="number" class="field-size-input" value="${field.fontSize}" min="8" max="200"></label>
-                <label class="field-font-label">font: <select class="field-font-select">${buildFontOptions(field.font)}</select></label>
-                <button class="remove-btn" data-column="${field.column}">&times;</button>
+            const card = document.createElement('div');
+            card.className = 'field-card';
+            card.innerHTML = `
+                <div class="field-card-row1">
+                    <span class="field-card-name">${field.column}</span>
+                    <input type="color" class="field-color-swatch" value="${field.color}" title="Change color">
+                    <button class="field-remove-btn" data-column="${field.column}" title="Remove">&times;</button>
+                </div>
+                <div class="field-card-row2">
+                    <span class="field-detail">(${field.x}, ${field.y})</span>
+                    <label class="field-detail">size: <input type="number" value="${field.fontSize}" min="8" max="200"></label>
+                    <label class="field-detail">font: <select>${buildFontOptions(field.font)}</select></label>
+                </div>
             `;
-            li.querySelector('.remove-btn').addEventListener('click', () => removeField(field.column));
-            li.querySelector('.field-size-input').addEventListener('input', (e) => {
+
+            card.querySelector('.field-remove-btn').addEventListener('click', () => removeField(field.column));
+
+            card.querySelector('.field-color-swatch').addEventListener('input', (e) => {
+                field.color = e.target.value;
+                renderMarkers();
+            });
+
+            card.querySelector('.field-card-row2 input[type="number"]').addEventListener('input', (e) => {
                 field.fontSize = parseInt(e.target.value) || 30;
                 renderMarkers();
             });
-            li.querySelector('.field-font-select').addEventListener('change', (e) => {
+
+            card.querySelector('.field-card-row2 select').addEventListener('change', (e) => {
                 field.font = e.target.value;
                 renderMarkers();
             });
-            fieldsList.appendChild(li);
+
+            fieldsList.appendChild(card);
         });
     }
 
@@ -287,9 +348,14 @@
         renderFieldsList();
     }
 
-    // --- Data preview table ---
+    // ── Data preview table ──
     function renderDataPreview(cols, rows) {
-        previewSection.classList.remove('hidden');
+        showSection(previewSection);
+        // Collapse by default after first render
+        dataPreviewCollapsed = true;
+        previewToggle.classList.add('collapsed');
+        previewBody.classList.add('collapsed');
+
         let html = '<thead><tr>';
         cols.forEach(c => html += `<th>${c}</th>`);
         html += '</tr></thead><tbody>';
@@ -302,7 +368,7 @@
         previewTable.innerHTML = html;
     }
 
-    // --- Generate ---
+    // ── Generate ──
     generateBtn.addEventListener('click', async () => {
         if (!templateFilename || !dataFilename || placedFields.length === 0) {
             generateStatus.textContent = 'Please upload files and place at least one field.';
@@ -311,6 +377,7 @@
         }
 
         generateBtn.disabled = true;
+        generateBtn.classList.add('loading');
         generateStatus.textContent = 'Generating certificates...';
         generateStatus.className = 'status-msg loading';
 
@@ -327,8 +394,12 @@
                 generateStatus.textContent = err.error || 'Generation failed';
                 generateStatus.className = 'status-msg error';
                 generateBtn.disabled = false;
+                generateBtn.classList.remove('loading');
                 return;
             }
+
+            // Try to get count from header
+            const countHeader = res.headers.get('X-Certificate-Count');
 
             const blob = await res.blob();
             const url = URL.createObjectURL(blob);
@@ -340,7 +411,8 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
 
-            generateStatus.textContent = 'Done! Your ZIP is downloading.';
+            const countMsg = countHeader ? `${countHeader} certificates generated.` : 'Done!';
+            generateStatus.textContent = `${countMsg} Your ZIP is downloading.`;
             generateStatus.className = 'status-msg success';
         } catch (e) {
             generateStatus.textContent = 'Network error. Please try again.';
@@ -348,6 +420,7 @@
         }
 
         generateBtn.disabled = false;
+        generateBtn.classList.remove('loading');
     });
 
     // Re-render markers on window resize

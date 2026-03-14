@@ -1,63 +1,51 @@
 # Certificate Generator
 
-A simple Python-based tool to generate certificates from a template image and an Excel sheet. The script reads user details from `recipients.xlsx`, prints Name, USN, and Team Name on the certificate template, and exports the generated certificates into the `output/` folder.
+Web app to bulk-generate certificates from a template image and a CSV/XLSX data file. Upload, point-and-click to place fields, customize fonts/colors/sizes per field, and download a ZIP.
+
+**Live:** https://cert-generator-production.up.railway.app
 
 ## Features
-- Reads Name, USN, and Team Name from an Excel sheet.
-- Renders text on a certificate PNG template.
-- Supports custom fonts, colors, and positioning.
-- Automatically exports final certificates as PNG files.
 
-## Project Structure
-```
-cert-proj/
-│
-├── generate_and_send.py
-├── data/
-│   └── recipients.xlsx
-├── template/
-│   └── certificate.png
-├── fonts/
-│   └── FontName.ttf
-└── output/
-```
+- Drag-and-drop upload for template (PNG/JPG/WEBP) and data (CSV/XLSX)
+- Visual field placement — click on the template to position text
+- Per-field font, size, and color controls
+- Custom font upload (TTF/OTF)
+- ZIP download of all generated certificates
 
-## Requirements
-- Python 3
-- Virtual environment (recommended)
+## Quick Start
 
-Install dependencies:
-```
-pip install pillow pandas openpyxl
+```bash
+git clone https://github.com/<your-username>/cert-proj.git
+cd cert-proj
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python app.py
 ```
 
-## Usage
-1. Place your certificate template inside the `template/` folder.
-2. Place your Excel file (`recipients.xlsx`) inside the `data/` folder.
-3. Update coordinates, font paths, and settings inside `generate_and_send.py` as needed.
-4. Run the script:
-```
-python3 generate_and_send.py
-```
+Open http://localhost:8080
 
-Certificates will be generated inside the `output/` folder.
+## Deploy
 
-## Excel Format
-The script expects the following column names:
-```
-Name
-USN
-TEAM NAME
+```bash
+railway login
+railway init
+railway up
+railway domain
 ```
 
-## Customization
-You can edit:
-- Text coordinates
-- Font file and size
-- Text color
-- Output file naming
+## Contributing
 
-All settings are inside the configuration section of the script.
+1. Fork the repo
+2. Create a branch (`git checkout -b feature/my-feature`)
+3. Make your changes
+4. Run the app locally and verify everything works
+5. Commit (`git commit -m "Add my feature"`)
+6. Push (`git push origin feature/my-feature`)
+7. Open a Pull Request
+
+Keep PRs focused on a single change. No frameworks — vanilla HTML/CSS/JS only for the frontend.
 
 ## License
-Free to use 
+
+Free to use.
