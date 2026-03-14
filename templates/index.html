@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Certificate Generator</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Certificate Generator</h1>
+
+        <!-- Step 1: Upload -->
+        <section class="card" id="upload-section">
+            <h2>1. Upload Files</h2>
+            <div class="upload-row">
+                <div class="dropzone" id="template-dropzone">
+                    <input type="file" id="template-input" accept=".png,.jpg,.jpeg,.webp" hidden>
+                    <p class="dropzone-label">Drop certificate template here<br><small>PNG, JPG, WEBP</small></p>
+                    <p class="dropzone-status" id="template-status"></p>
+                </div>
+                <div class="dropzone" id="data-dropzone">
+                    <input type="file" id="data-input" accept=".csv,.xlsx,.xls" hidden>
+                    <p class="dropzone-label">Drop data file here<br><small>CSV, XLSX</small></p>
+                    <p class="dropzone-status" id="data-status"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 2: Map Fields -->
+        <section class="card hidden" id="mapping-section">
+            <h2>2. Place Fields on Template</h2>
+            <p class="hint">Select a column below, then click on the template to place it.</p>
+
+            <div class="columns-bar" id="columns-bar"></div>
+
+            <div class="settings-row">
+                <label>Font Size: <input type="number" id="font-size" value="30" min="8" max="200"></label>
+                <label>Color: <input type="color" id="text-color" value="#684631"></label>
+                <label>Font:
+                    <select id="font-select">
+                        <option value="">Default</option>
+                    </select>
+                </label>
+            </div>
+
+            <div class="template-preview-wrapper" id="preview-wrapper">
+                <img id="template-preview" src="" alt="Template Preview">
+                <div id="markers-layer"></div>
+            </div>
+
+            <div class="placed-fields" id="placed-fields">
+                <h3>Placed Fields</h3>
+                <ul id="fields-list"></ul>
+            </div>
+        </section>
+
+        <!-- Step 3: Generate -->
+        <section class="card hidden" id="generate-section">
+            <h2>3. Generate Certificates</h2>
+            <button id="generate-btn" class="btn-primary">Generate & Download ZIP</button>
+            <div id="generate-status" class="status-msg"></div>
+        </section>
+
+        <!-- Data Preview -->
+        <section class="card hidden" id="preview-section">
+            <h2>Data Preview</h2>
+            <div class="table-wrapper">
+                <table id="data-preview-table"></table>
+            </div>
+        </section>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
