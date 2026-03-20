@@ -281,6 +281,48 @@
                 removeField(field.column);
             });
 
+            // Prevent clicks on a marker from triggering "place field" on the wrapper
+            marker.addEventListener('click', (e) => e.stopPropagation());
+
+            // Drag to reposition
+            marker.addEventListener('mousedown', (e) => {
+                if (e.target.classList.contains('remove-marker')) return;
+                e.preventDefault();
+                e.stopPropagation();
+
+                const startMouseX = e.clientX;
+                const startMouseY = e.clientY;
+                const startPctX = field.x / templateWidth;
+                const startPctY = field.y / templateHeight;
+                let dragged = false;
+
+                marker.style.cursor = 'grabbing';
+
+                const onMouseMove = (e) => {
+                    dragged = true;
+                    const layerW = markersLayer.clientWidth;
+                    const layerH = markersLayer.clientHeight;
+                    const newPctX = startPctX + (e.clientX - startMouseX) / layerW;
+                    const newPctY = startPctY + (e.clientY - startMouseY) / layerH;
+                    marker.style.left = (Math.max(0, Math.min(1, newPctX)) * 100) + '%';
+                    marker.style.top = (Math.max(0, Math.min(1, newPctY)) * 100) + '%';
+                };
+
+                const onMouseUp = () => {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                    marker.style.cursor = '';
+                    if (dragged) {
+                        field.x = Math.round(parseFloat(marker.style.left) / 100 * templateWidth);
+                        field.y = Math.round(parseFloat(marker.style.top) / 100 * templateHeight);
+                        renderFieldsList();
+                    }
+                };
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+
             markersLayer.appendChild(marker);
         });
     }

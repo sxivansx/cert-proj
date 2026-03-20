@@ -288,6 +288,7 @@ select:focus-visible {
     position: absolute;
     transform: translate(-50%, 0);
     pointer-events: auto;
+    cursor: grab;
 }
 
 .marker-text {
