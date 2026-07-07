@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+.DS_Store
+.claude/
+uploads/
+output/
+README.md
+Procfile
+*.md
